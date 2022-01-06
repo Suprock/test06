@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form>
+        <button type="button" onclick="begin_thread()">提交</button>
+    </form>
+    <div id="person"></div>
+</body>
+<script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+<script>
+function begin_thread()
+{
+    $.ajax(
+        {
+            url:"{{ url_for('index') }}",
+            type:"post",
+            success:function(data)
+            {
+                console.log(data);
+                var socket = io();
+                socket.on('connect', function()
+                {
+                    socket.emit('connected', {data: '我来连接了'});
+                });
+                socket.on("set_num", function(res)
+                {
+                    // var elem_log = document.getElementById("upload_img_log");
+                    // var new_log = document.createElement("p");
+                    // new_log.innerHTML = res;
+                    // elem_log.appendChild(new_log);
+                    console.log(res["name"], res["max_num"], res['num']);
+                    var element_persons = document.getElementById("person");
+                    if(!document.getElementById(res["id"]))
+                    {
+                        var node_person = document.createElement("div");
+                        node_person.id=res["id"];
+                        var label_person = document.createElement("label");
+                        label_person.id = res["id"] + "label";
+                        label_person.innerHTML = "名字:" + res["name"] + "," + "当前进度：" + res["num"] + "," + "总数：" + res["max_num"] + "。";
+                        node_person.appendChild(label_person);
+                        var progress_bar = document.createElement("div");
+                        progress_bar.id = res["id"]+"bar";
+                        progress_bar.innerHTML = "<progress value='"+ res["num"] +"' max='100'></progress>";
+                        node_person.appendChild(progress_bar);
+                        element_persons.appendChild(node_person);
+                    }
+                    else
+                    {
+                        var node_person = document.getElementById(res["id"] + "label");
+                        node_person.innerHTML = "名字:" + res["name"] + "," + "当前进度：" + res["num"] + "," + "总数：" + res["max_num"] + "。";
+                        var progress_bar = document.getElementById(res["id"]+"bar");
+                        progress_bar.innerHTML = "<progress value='"+ res["num"] +"' max='100'></progress>";
+                    }
+                    
+                }
+            );
+            socket.on("disconnect", () => {
+                console.log(socket.connected); // false
+            });
+            }
+        }
+    )
+}
+</script>
+</html>
